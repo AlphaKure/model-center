@@ -15,4 +15,4 @@ class Inference(BaseModel):
     height: int
     steps: int
     scale: float
-    negativePrompt: str = ""
+    negativePrompt: str 
