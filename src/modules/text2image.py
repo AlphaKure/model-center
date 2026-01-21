@@ -14,13 +14,16 @@ class TextToImageEngine:
 
     pipeline = None
     isRunning: bool = False
+    outputPath: str
 
     @classmethod 
     def load_model(
             cls, 
             modelPath: str,
             dtype: Literal["bfloat16", "auto"],
-            offload: bool = False # offload to cpu
+            outputPath: str,
+            offload: bool = False, # offload to cpu
+            
     )-> Tuple[int, str, str]: # code message detail
 
         if cls.pipeline is not None:
@@ -41,6 +44,9 @@ class TextToImageEngine:
         
         if offload:
             cls.pipeline.enable_model_cpu_offload()
+        if not os.path.isdir(outputPath):
+            return 400, "Output path not exist", "Output path not exist"
+        cls.outputPath = outputPath
 
         return 200, "Success", ""
     
@@ -49,6 +55,9 @@ class TextToImageEngine:
 
         if cls.pipeline is None:
             return 400, "Model didn't load", "Model didn't load"
+
+        if cls.isRunning:
+            return 400, "Another task running", "Another task running"
 
         del cls.pipeline
         cls.pipeline = None
