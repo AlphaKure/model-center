@@ -1,4 +1,4 @@
-from src.routers import enviroment_route
+from src import routers
 
 from fastapi import FastAPI
 import uvicorn
@@ -9,7 +9,8 @@ app = FastAPI(
     docs_url= "/api"
 )
 
-app.include_router(enviroment_route)
+app.include_router(routers.enviroment_route)
+app.include_router(routers.t2i_route)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port= 8080)
