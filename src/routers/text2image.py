@@ -20,7 +20,7 @@ def unload_model():
     code, message, detail = TextToImageEngine.unload_model()
     return JSONResponse(status_code= code, content=BasicReturn(message= message, detail= detail).dict())
 
-@route.get("/recommand")
+@route.get("")
 def get_recommand_parameter():
     code, message, detail = TextToImageEngine.get_recommand_parameter()
     if code ==200:
@@ -28,7 +28,7 @@ def get_recommand_parameter():
     else:
         return JSONResponse(status_code= code, content=BasicReturn(message= message, detail= detail).dict())
     
-@route.post("/")
+@route.post("")
 async def inference(request:Inference):
 
     code, message, detail = await TextToImageEngine.interface(**request.model_dump())
