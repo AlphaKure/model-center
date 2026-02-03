@@ -26,12 +26,12 @@ RAM: RDIMM DDR5 128GB*2
 
 ### Text to Image
 
-* Running will at cuda mode:
+* Running well at cuda mode:
 
     - [Tongyi-MAI/Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo)
 
     - [black-forest-labs/FLUX.2-klein-4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B)
 
-* Running will at balanced mode
+* Running well at balanced mode
 
     - [black-forest-labs/FLUX.2-klein-9B](https://huggingface.co/black-forest-labs/FLUX.2-klein-9B)
