@@ -22,8 +22,9 @@ class TextToImageEngine:
             cls, 
             modelPath: str,
             dtype: Literal["bfloat16", "auto"],
+            mode: Literal["balanced", "cuda"],
             outputPath: str,
-            offload: bool = False, # offload to cpu
+            #offload: bool = False, # offload to cpu
             
     )-> Tuple[int, str, str]: # code message detail
 
@@ -37,14 +38,15 @@ class TextToImageEngine:
             cls.pipeline = AutoPipelineForText2Image.from_pretrained(
                 modelPath,
                 torch_dtype= dtype,
-                trust_remote_code = True 
+                trust_remote_code = True,
+                device_map = mode
             )
-            cls.pipeline.to("cuda")
         except Exception as error:
             return 500, "Load model error", str(error)
         
-        if offload:
-            cls.pipeline.enable_model_cpu_offload()
+        #if offload:
+        #    cls.pipeline.enable_model_cpu_offload()
+
         if not os.path.isdir(outputPath):
             return 400, "Output path not exist", "Output path not exist"
         cls.outputPath = outputPath
@@ -73,6 +75,7 @@ class TextToImageEngine:
         if cls.pipeline is None:
             return 400, "Model didn't load", "Model didn't load"
         
+        # This is not a good idea. Just for origin model.
         if isinstance(cls.pipeline, ZImagePipeline):
             return 200, {
                 "steps": 9,
@@ -99,7 +102,7 @@ class TextToImageEngine:
             guidance_scale= scale,
             callback_on_step_end= partial(_callback, loop, queue, steps),
         )
-        
+        # Some of model not support negative_prompt
         if "negative_prompt" in supportArgs and negativePrompt:
             generateArgs["negative_prompt"] = negativePrompt
 
