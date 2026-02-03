@@ -4,10 +4,11 @@ import asyncio
 from functools import partial
 from datetime import datetime
 import os
+import inspect
 
 from src.modules import _callback, Progress
 
-from diffusers import AutoPipelineForText2Image, ZImagePipeline
+from diffusers import AutoPipelineForText2Image, ZImagePipeline, Flux2KleinPipeline
 import torch
 
 class TextToImageEngine:
@@ -21,8 +22,9 @@ class TextToImageEngine:
             cls, 
             modelPath: str,
             dtype: Literal["bfloat16", "auto"],
+            mode: Literal["balanced", "cuda"],
             outputPath: str,
-            offload: bool = False, # offload to cpu
+            #offload: bool = False, # offload to cpu
             
     )-> Tuple[int, str, str]: # code message detail
 
@@ -36,14 +38,15 @@ class TextToImageEngine:
             cls.pipeline = AutoPipelineForText2Image.from_pretrained(
                 modelPath,
                 torch_dtype= dtype,
-                trust_remote_code = True 
+                trust_remote_code = True,
+                device_map = mode
             )
-            cls.pipeline.to("cuda")
         except Exception as error:
             return 500, "Load model error", str(error)
         
-        if offload:
-            cls.pipeline.enable_model_cpu_offload()
+        #if offload:
+        #    cls.pipeline.enable_model_cpu_offload()
+
         if not os.path.isdir(outputPath):
             return 400, "Output path not exist", "Output path not exist"
         cls.outputPath = outputPath
@@ -72,27 +75,41 @@ class TextToImageEngine:
         if cls.pipeline is None:
             return 400, "Model didn't load", "Model didn't load"
         
+        # This is not a good idea. Just for origin model.
         if isinstance(cls.pipeline, ZImagePipeline):
             return 200, {
                 "steps": 9,
                 "scale": 0.0
             }, None
+        elif isinstance(cls.pipeline, Flux2KleinPipeline):
+            return 200, {
+                "steps": 4,
+                "scale": 1.0
+            }, None 
         else:
             return 404, "Unknown pipeline type ", "Unknown pipeline type"
 
     @classmethod
     def _inference(cls, loop:asyncio.AbstractEventLoop, queue:asyncio.Queue , prompt: str, width: int, height: int, steps: int, scale: float = 0.0, negativePrompt: str = ""):
+        
+        supportArgs = inspect.signature(cls.pipeline.__call__).parameters # Get pipeline generate parameter dictionary
+        
+        generateArgs = dict(
+            prompt= prompt,
+            width= width,
+            height= height,
+            num_inference_steps= steps,
+            guidance_scale= scale,
+            callback_on_step_end= partial(_callback, loop, queue, steps),
+        )
+        # Some of model not support negative_prompt
+        if "negative_prompt" in supportArgs and negativePrompt:
+            generateArgs["negative_prompt"] = negativePrompt
+
         try:
             newImage = cls.pipeline(
-                prompt= prompt,
-                width= width,
-                height= height,
-                num_inference_steps= steps,
-                guidance_scale= scale,
-                negative_prompt= negativePrompt,
-                callback_on_step_end= partial(_callback, loop, queue, steps)
+                **generateArgs                
             )
-    
             currentTime = datetime.now().strftime('%Y%m%d_%H%M%S')
             newImage.images[0].save(os.path.join(cls.outputPath, f"{currentTime}.png"))
             loop.call_soon_threadsafe(queue.put_nowait, Progress(result= str(os.path.join(cls.outputPath, f"{currentTime}.png")), error= "", percentage= 100.0, statusCode= 200).dict())
