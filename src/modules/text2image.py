@@ -5,6 +5,7 @@ from functools import partial
 from datetime import datetime
 import os
 import inspect
+import json
 
 from src.modules import _callback, Progress
 from src.schemas.text2image import RecommendParams
@@ -142,7 +143,7 @@ class TextToImageEngine:
                 process = await tracker.get()
                 if not process:
                     break                   
-                yield f"{process}\n"
+                yield f"data: {json.dumps(process)}\n\n"
                 await asyncio.sleep(0.1)
 
         

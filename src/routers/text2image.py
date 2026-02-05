@@ -62,4 +62,4 @@ async def inference(request:Inference):
     code, message, detail = await TextToImageEngine.interface(**request.model_dump())
     if code!= 200:
         return JSONResponse(status_code= code, content= BasicReturn(message= message, detail= detail).dict())
-    return StreamingResponse(message, media_type="application/json")
+    return StreamingResponse(message, media_type="text/event-stream")
