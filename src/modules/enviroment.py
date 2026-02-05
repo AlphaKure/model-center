@@ -1,12 +1,12 @@
-from src.schemas.enviroment import TorchInfomation
+from src.schemas.enviroment import TorchInformation
 
 import torch
 
 
-def torch_test() -> TorchInfomation:
+def torch_test() -> TorchInformation:
 
     """test torch available"""
-    return TorchInfomation(
+    return TorchInformation(
         version= str(torch.__version__), # torch version
         isAvailable= torch.cuda.is_available(),
         deviceCount= torch.cuda.device_count(),

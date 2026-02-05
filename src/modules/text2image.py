@@ -7,6 +7,7 @@ import os
 import inspect
 
 from src.modules import _callback, Progress
+from src.schemas.text2image import RecommendParams
 
 from diffusers import AutoPipelineForText2Image, ZImagePipeline, Flux2KleinPipeline
 import torch
@@ -21,7 +22,7 @@ class TextToImageEngine:
     def load_model(
             cls, 
             modelPath: str,
-            dtype: Literal["bfloat16", "auto"],
+            dtype: Literal["bfloat16", "float16", "auto"],
             mode: Literal["balanced", "cuda"],
             outputPath: str,
             #offload: bool = False, # offload to cpu
@@ -33,6 +34,9 @@ class TextToImageEngine:
 
         if dtype == "bfloat16":
             dtype = torch.bfloat16
+        
+        if dtype == "float16": 
+            dtype = torch.float16
 
         try:
             cls.pipeline = AutoPipelineForText2Image.from_pretrained(
@@ -48,7 +52,7 @@ class TextToImageEngine:
         #    cls.pipeline.enable_model_cpu_offload()
 
         if not os.path.isdir(outputPath):
-            return 400, "Output path not exist", "Output path not exist"
+            return 404, "Output path not exist", "Output path not exist"
         cls.outputPath = outputPath
 
         return 200, "Success", ""
@@ -77,15 +81,15 @@ class TextToImageEngine:
         
         # This is not a good idea. Just for origin model.
         if isinstance(cls.pipeline, ZImagePipeline):
-            return 200, {
-                "steps": 9,
-                "scale": 0.0
-            }, None
+            return 200, RecommendParams(
+                steps= 9,
+                scale= 0.0
+            ), None
         elif isinstance(cls.pipeline, Flux2KleinPipeline):
-            return 200, {
-                "steps": 4,
-                "scale": 1.0
-            }, None 
+            return 200, RecommendParams(
+                steps= 4,
+                scale= 1.0
+            ), None 
         else:
             return 404, "Unknown pipeline type ", "Unknown pipeline type"
 
@@ -127,7 +131,7 @@ class TextToImageEngine:
             return 400, "Model didn't load", "Model didn't load"
         
         if cls.isRunning:
-            return 102, "Another task running", "Another task running"
+            return 409, "Another task running", "Another task running"
         
         loop = asyncio.get_running_loop()
         tracker = asyncio.Queue()

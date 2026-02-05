@@ -1,13 +1,8 @@
 import asyncio
 
+from src.schemas import Progress
+
 from pydantic import BaseModel
-
-class Progress(BaseModel):
-    result: str # output file path
-    error: str # error message
-    percentage: float
-    statusCode: int
-
 
 def _callback(loop: asyncio.AbstractEventLoop , queue: asyncio.Queue, totalSteps: int,  *args , ** kwargs):
     """for pipeline return progress"""

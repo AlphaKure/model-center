@@ -1,5 +1,5 @@
 from src.modules.enviroment import torch_test
-from src.schemas.enviroment import TorchInfomation
+from src.schemas.enviroment import TorchInformation
 
 from fastapi import APIRouter
 
@@ -10,7 +10,7 @@ route= APIRouter(
 
 @route.get(
     path= "/",
-    response_model= TorchInfomation,
+    response_model= TorchInformation,
     responses= 
         {
             200: {"description": "Success"}
